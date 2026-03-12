@@ -4,8 +4,7 @@ author: "Aarti Khanna, Connor Taplin, Priya Devanesan, Shreya Diwakar"
 format:
   dashboard: 
    theme: [cerulean]
-   html: 
-    embed-resources: true
+   embed-resources: true
 editor: visual
 ---
 
@@ -203,7 +202,7 @@ ggplot(trend_summary,
 ## Row 2 Column 2 {height="20%"}
 
 ::: {.card title="Conclusion"}
-Across BA quintiles, rates of death rise and fall in similar patters, but at different levels. Level of education has a clear correlation to likelihood to face death across the board.
+This graph shows crude mortality rate by BA-share quintile. Quintile 1, representing the states with the lowest BA attainment, has the highest crude mortality rate, while quintile 5, representing the states with the highest BA attainment, has the lowest mortality rate. Across all quintiles, mortality rates generally declined until around 2009, after which they began to rise again, though not at the same rate in every group. While the quintiles follow similar overall patterns over time, the gap between low- and high-BA-share groups remains consistent and does not close.
 :::
 
 # Question 2
@@ -283,7 +282,8 @@ ggplotly(
 ## Row 2 Column 1 {height="20%"}
 
 ::: {.card title="Conclusion"}
-We can see in this graph that mortality rate seems to have little correlation with year, although perhaps it can be argued that there is more blue (i.e. more recent) dots closer to the top of the graph. Poverty rates seems to have an unclear effect on mortality rate, according to this dataset. More work would have to be done to reach a stonger conclusion.
+We can see in this graph that mortality rate seems to have little correlation with year, although perhaps it can be argued that there is more blue (i.e. more recent) dots closer to the top of the graph. 
+Regression shows that for every 1 percentage point increase in poverty rate, external cause mortality rises by 3.10 deaths per 100,000
 :::
 
 # Coding Notes

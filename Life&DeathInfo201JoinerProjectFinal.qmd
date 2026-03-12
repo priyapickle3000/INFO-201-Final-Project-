@@ -1,0 +1,168 @@
+---
+title: "Life and Death in America: Mortality Rates vs Education Level & Poverty Level by State and Year"
+author: "Shreya Diwakar, Priya Devanesan, Connor Taplin, Aarti Khanna"
+format:
+  html:
+   embed-resources: true
+   theme: morph
+editor: visual
+---
+
+##  {height="50%"}
+
+## Part 1 & 2: Find The Data
+
+### load libraries needed - because we are reading code, modifying it, and creating graphs, the four libraries below will be necessary.
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(readr)
+  
+
+```
+
+### Load datasets
+
+About the two datasets:
+
+Sources:\
+NGHIS: NHGIS citation: Jonathan Schroeder, David Van Riper, Steven Manson, Katherine Knowles, Tracy Kugler, Finn Roberts, and Steven Ruggles. IPUMS National Historical Geographic Information System: Version 20.0 \[dataset\]. Minneapolis, MN: IPUMS. 2025. National Historic GIS, Sequence 500.04, Sequence 641.01 This is from the National Historic Geographic Information System. As these is governmentally collected and presented data, it shouldn't be generated/fake.
+
+Mortality Data: Centers for Disease Control and Prevention, National Center for Health Statistics. National Vital Statistics System, Mortality: Compressed Mortality File 1999-2016 on CDC WONDER Online Database, released June 2017. Data are from the Compressed Mortality File 1999-2016 Series 20 No. 2U, 2016, as compiled from data provided by the 57 vital statistics jurisdictions through the Vital Statistics Cooperative Program. Accessed at http://wonder.cdc.gov/cmf-icd10.html\
+This is from the Center of Disease Control. As another governmental source of data, it shouldn't be generated/fake.
+
+```{r}
+NHGIS_data <- read.csv("NHGIS Data .csv")
+mortality_data <- read.csv("Compressed Mortality, 1999-2016-2.csv")
+
+```
+
+### Join key standardization
+
+```{r}
+NHGIS_data$state_key <- toupper(trimws(NHGIS_data$STATE))
+mortality_data$state_key  <- toupper(trimws(mortality_data$State))
+```
+
+### Join Key by State
+
+```{r}
+NHGIS_data$state_key <- toupper(trimws(NHGIS_data$STATE))
+mortality_data$state_key  <- toupper(trimws(mortality_data$State))
+```
+
+### 2015 - 2019 data. This keeps only the columns we need from NHGIS, which are the join key + state name + poverty + education counts (for years 2000, 2006-2010, 2008-2012, and 2012-2016, as these years align best with our other dataset). Selecting a smaller date range makes the join simpler and easier to explain.
+
+```{r}
+nhgis_small <- NHGIS_data |> select(state_key, STATE, B86AA2000, B86AA105, B86AA125, B86AA165, CL6AA2000, CL6AA105, CL6AA125, CL6AA165)
+```
+
+### This creates a list of cause of death categories
+
+```{r}
+chapters_keep <- c(
+  "External causes of morbidity and mortality",
+  "Mental and behavioural disorders",
+  "Neoplasms",
+  "Diseases of the circulatory system")
+```
+
+### Changes mortality year to integer
+
+```{r}
+mortality_data$Year <- as.integer(mortality_data$Year)
+```
+
+### new data frame for the filtered IDC Chapters
+
+```{r}
+mort_filtered <- mortality_data |> filter(ICD.Chapter %in% chapters_keep)
+```
+
+### This adds up the deaths and populations for each state year. Without this, there are multiple rows per state per year. One row per year is easier to compare
+
+```{r}
+mort_state_year <- mort_filtered |> group_by(state_key, Year) |>summarize(
+    Deaths = sum(Deaths, na.rm = TRUE),
+    Population = sum(Population, na.rm = TRUE),
+    .groups = "drop" )
+```
+
+### This makes a crude mortality rate per 100,000 people for each state-year. This rate makes comparisons fair
+
+```{r}
+mort_state_year$CrudeRate_calc <- ifelse(  mort_state_year$Population > 0, (mort_state_year$Deaths / mort_state_year$Population) * 100000, NA)
+```
+
+##  {height="50%"}
+
+# Part 3: Combine the Datasets
+
+### combines the dataset so each year has mortality numbers plus education/poverty info
+
+```{r}
+merged <- mort_state_year %>% left_join(nhgis_small, by = "state_key")
+
+glimpse(merged)
+```
+
+##  {height="50%"}
+
+# Part 4: Data Wrangling
+
+### Clean rows, creates a new dataset to only keep rows where population is greater than 0, and there are no null values in Crude Rate or Population
+
+```{r}
+merged2 <- merged |> filter(
+!is.na(CrudeRate_calc),
+    !is.na(Population), Population > 0)
+```
+
+### Summarize Data - Creates a summary dataframe that holds the average crude death rate for 2012, and then the avg poverty and education for the 2012-2016 range. Also, counts the total deaths.
+
+```{r}
+summary_state <- merged |>
+  group_by(STATE) |>
+  filter(Year >= 2012) |>
+  summarize(
+    avg_mortality_rate = mean(CrudeRate_calc, na.rm = TRUE),
+    avg_poverty = mean(CL6AA165, na.rm = TRUE),
+    avg_education = mean(B86AA165, na.rm = TRUE),
+    total_deaths = sum(Deaths, na.rm = TRUE),
+    .groups = "drop"
+  )
+```
+
+### Graph - graphs mortalist rate against year
+
+```{r}
+ggplot(merged, aes(x = Year, y = CrudeRate_calc, color = STATE, group = STATE)) +
+  geom_line() +
+  labs(
+    title = "Mortality Rate by State Over Time",
+    x = "Year",
+    y = "Deaths per 100,000 people",
+    color = "State"
+  ) +
+  theme_minimal()
+```
+
+##  {height="50%"}
+
+# Part 5: Group Information
+
+Lab Section BD (Wednesdays at 9:30) with Anna Huang. Our group is interested in analyzing data on death statistics because it can help us understand how people can live longer.
+
+Priya Devanesan (English and Data Science, University of Washington; priyad4\@uw.edu): As someone with five doctors in my family, I think looking into health statistics is really important and interesting work. My interest in data science comes from the great experience I had in the CSE 12x series; I really enjoyed coding (it's like solving puzzles!), and wanted to find ways to tie that interest back to my humanities major.
+
+Aarti Khanna (Marketing and Data Science, Sophomore, University of Washington, aartik1\@uw.edu). I am interested in careers in data science because of the first informatics class i took, INFO 103. This class looked at trends within social media and how bots on social media react with one another. This class along with INFO 201 caught my attention because I love using code to find certain data and I think this would be very useful in my future career in marketing. Specifically, I am interested in health data science because I find it to be a much more productive way to find trends in things that are leading causes of death in America, in hopes to lower those mortality rates.
+
+Connor Taplin (Molecular, Cellular, and Developmental Biology, Junior, University of Washington; taplinc\@uw.edu). I am interested in data science as statistical analysis is crucial for the field of biology, especially for organizing datasets into clear, testable parameters. My interest in data science comes from taking epidemiology, biostatistics,and regression methods, and my experience collaborating on projects with Fred Hutch analyzing fly lifespan and genome data. As someone who was initially interested in public health, our topic is interesting to see how certain demographic or environmental factors play a role in human mortality causes and health outcomes.
+
+Shreya Diwakar (pre-major, the university of Washington; shreyad6\@uw.edu) is interested in leading causes of death in America because this is a topic that everyone is impacted by especially regarding themselves and their loved ones, it is good information to have. Shreya is interested in informatics because she finds it interesting how people can take data and computers to figure out different correlations, she finds this skill useful.
+
+## Coding Notes
+
+For this assignment tools we used included advice from one of the group members friends who is very proficient in coding, two member's profeciency in Java coding, and the tools learned in one member's quarter of R. Along with that background expertise, we used google and geeks4geeks to find fixes for very few lines of code. Our main tool used for our code were the google slides that Kyle uses during lecture!

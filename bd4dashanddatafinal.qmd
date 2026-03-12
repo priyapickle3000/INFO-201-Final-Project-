@@ -1,0 +1,309 @@
+---
+title: "BD4 - Dashboard and Data Analysis"
+author: "Aarti Khanna, Connor Taplin, Priya Devanesan, Shreya Diwakar"
+format:
+  dashboard: 
+   theme: [cerulean]
+   html: 
+    embed-resources: true
+editor: visual
+---
+
+# Introduction
+
+## Row 1 Column 1 {height="80%"}
+
+::: {.card title="Introduction"}
+Every year, millions of Americans die from causes that are both tragic and deeply patterned. According to the Centers for Disease control and prevention, the leading causes of death in the United States consistently includes cancer, disease, accidents, stroke, chronic liver respiratory diseases, Alzheimer’s disease, kidney disease, COVID-19, liver disease. While these categories appear as clean statistics, they represent deeply human experiences shaped by where people live, the resources they have, and the systems that surround them. Our project, goes beyond counting deaths, we are connecting national mortality data with state-level education and poverty indicators to explore how social and economic conditions relate to patters of mortality
+
+We are working on a project that focuses on three important big-picture questions for Life and Death in America. **What is the correlation between crude mortality rate per 100,000 and BA attainment by quartile? How does BA attainment by quartile affect crude mortality rate per 100,000 by ICD chapter?** The second one being, **what do shifts in leading causes of death reveal about public attention and community priorities?** and the third one being, **How does the poverty rate relate to mortality rates?** BA attainment is calculated as the percentage of a population that has achieved a bachelor’s degree and is an indicator of the population’s overall educational attainment and socioeconomic status. Through the classification of communities into different education quartiles, disparities in mortality rates by educational attainment can be studied. ICD chapter refers to chapters in the International Classification of Diseases that classifies the underlying cause of death into broad disease categories including among others circulatory diseases, cancers and respiratory diseases. Our data sources for these questions include CDC (Centers for Disease Control and Prevention) datasets including The CDC WONDER Multiple Cause of Death database, which is a set of mortality data derived from U.S. death certificates. Information in the database can be obtained from the following website URL: https://wonder.cdc.gov/mcd.html. Along with this, we also used the CDC’s National Center for Health Statistics (NCHS) national summary tables of leading causes of death. These are located on the following website URL: https://www.cdc.gov/nchs/fastats/leading-causes-of-death. The former dataset provides mortality information broken down by cause of death, time and demographics, while the latter summarizes the leading causes of death for U.S. residents. Our analysis delves into a question that has far reaching impacts on the health of a nation and its level of inequality. The US may be far ahead in the field of medicine, but it is often social factors and conditions that are more preventable that contribute to the leading causes of death. A person's level of education, their economic status, and access to healthcare can all play a large role in dictating the extent to which he or she is exposed to risk factors and is able to receive medical attention when necessary. In our heathland analysis, we crunched the numbers to see what the relationships between education and mortality rates reveal and how social conditions can play a role in the health of a nation and its people. Like with any other type of data, mortality data also comes with its set of ethics and limitations. Deaths are recorded on death certificates, which can sometimes contain mistakes and inaccuracies concerning the underlying cause of death. Aggregate mortality data may also obscure important differences between populations that may exist when looking at smaller subsets, particularly for subpopulations that are underrepresented in a dataset. Also important to remember is that mortality data shows outcomes rather than telling us about the daily lived experiences of individuals in a population and the health detriments to which they are exposed. Therefore, it is crucial to bear in mind that every value in a mortality dataset is a life lost.
+:::
+
+## Row 1 Column 2 {height="80%"}
+
+::: {.card title="Datasets"}
+Source: National Center for Health Statistics (NCHS), Centers for Disease Control and Prevention The CDC WONDER Multiple Cause of Death (MCD) dataset is derived from official death certificates stored in the National Death Index, which contains records from all 50 states and the District of Columbia. A death certificate lists a single underlying cause of death and, in many cases, one or more additional causes that are listed as contributing. The underlying cause is the condition most directly leading to death, whereas contributing causes represent other significant conditions present at the time of death. The underlying and contributing causes are assigned codes from the International Classification of Diseases, 10th Edition (ICD-10). This dataset contains information such the poverty levels and income of residence. The death records are collected from state vital statistics offices and are published by the Centers for Disease Control and Prevention (CDC) National Center for Health Statistics. The dataset now has over 3 million death records per year, which is the largest and one of the most widely used public health datasets in the U.S. We only use death records from recent years (about 2018-2023) in our analysis to study current trends in mortality. A strength of this data set is its national scope and rich details about the population of interest, which makes it possible to investigate mortality at the population level and at fine spatial resolution. A few potential sources of bias and missing data should be kept in mind. There may be some error in the recording of specific cause of death on the death certificate, and there are no data available on specific socioeconomic measures such as income or education at the individual level. This means that while many potential social determinants of health are included in the data set at the population or area level or derived from other sources, analyses are necessarily based on characteristics of populations or areas rather than of individuals.
+
+Dataset 2: CDC Leading Causes of Death Summary Tables Public Access Link: https://www.cdc.gov/nchs/fastats/leading-causes-of-death.htm Created by: National Center for Health Statistics The CDC Leading Causes of Death summary tables are an annual national snapshot of death in the United States. Produced using final, edited and standardized data from the death records and population estimates, the tables show the leading causes, number, and age-adjusted mortality rates of deaths occurring annually within the United States. This dataset presents mortality data from millions of individual death records for each cause of death, aggregated into national trends on leading causes of death. The data generally covers the latest revised year for which mortality data is available and is based on deaths occurring among U.S. residents. Additional tables provide mortality data by subpopulation (age, sex, and race/ethnicity). The dataset presented in the paper provides a straightforward and tangible measure of the relative burden of different causes of death. The fact that the data are summarized in terms of rankings and percentages, obscures the extent to which the data can be dissected and analyzed to reveal further information that might exist within a region or community. As noted, the summary data is not sufficient to really provide for the analysis of the relationships between mortality rates and other factors, such as average years of education achieved. More detailed data would be required to properly address these types of questions. Additionally, when examining a country level, the data may not be granular enough to describe in full detail the conditions that give rise to the observed mortality rates.
+:::
+
+## Row 1 Column 1 {height="80%"}
+
+::: {.card title="Load Datasets and modify code"}
+### load libraries needed - because we are reading code, modifying it, and creating graphs, the four libraries below will be necessary.
+
+```{r}
+library(dplyr)
+library(tidyr) 
+library(ggplot2)
+library(readr)
+  
+
+```
+
+### Load datasets
+
+```{r}
+NHGIS_data <- read.csv("NHGIS Data .csv")
+mortality_data <- read.csv("Compressed Mortality, 1999-2016-2.csv")
+
+```
+
+### Join key standardization
+
+```{r}
+NHGIS_data$state_key <- toupper(trimws(NHGIS_data$STATE))
+mortality_data$state_key  <- toupper(trimws(mortality_data$State))
+```
+
+### Join Key by State
+
+```{r}
+NHGIS_data$state_key <- toupper(trimws(NHGIS_data$STATE))
+mortality_data$state_key  <- toupper(trimws(mortality_data$State))
+```
+
+### 2015 - 2019 data. This keeps only the columns we need from NHGIS, which are the join key + state name + poverty + education counts (for years 2000, 2006-2010, 2008-2012, and 2012-2016, as these years align best with our other dataset). Selecting a smaller date range makes the join simpler and easier to explain.
+
+```{r}
+nhgis_small <- NHGIS_data |> select(state_key, STATE, B86AA2000, B86AA105, B86AA125, B86AA165, CL6AA2000, CL6AA105, CL6AA125, CL6AA165, B86AA195, B86AB195, B86AC195)
+```
+
+### This creates a list of cause of death categories
+
+```{r}
+chapters_keep <- c(
+  "External causes of morbidity and mortality",
+  "Mental and behavioural disorders",
+  "Neoplasms",
+  "Diseases of the circulatory system")
+```
+
+### Changes mortality year to integer
+
+```{r}
+mortality_data$Year <- as.integer(mortality_data$Year)
+```
+
+### new data frame for the filtered IDC Chapters
+
+```{r}
+mort_filtered <- mortality_data |> filter(ICD.Chapter %in% chapters_keep)
+```
+
+### combines the dataset so each year has mortality numbers plus education/poverty info
+
+```{r}
+merged <- mort_filtered %>% left_join(nhgis_small, by = "state_key")
+
+glimpse(merged)
+```
+
+### Clean rows, creates a new dataset to only keep rows where population is greater than 0, and there are no null values in Population
+
+```{r}
+merged2 <- merged |> filter(
+!is.na(Population), Population > 0)
+```
+:::
+
+# Question 1
+
+## Row 1 Column 1 {height="20%"}
+
+::: {.card title="Question"}
+What is the correlation between crude mortality rate per 100,000 and BA attainment by quartile? How does BA attainment by quartile effect crude mortality rate per 100,00 by IDC chapter.
+:::
+
+## Row 1 Column 2 {height="10%"}
+
+::: {.card title="Data Cleaning"}
+```{r}
+## Clean rows
+mort_state_year <- mort_filtered |> group_by(state_key, Year) |>summarize(
+    Deaths = sum(Deaths, na.rm = TRUE),
+    Population = sum(Population, na.rm = TRUE),
+    .groups = "drop" )
+```
+
+```{r}
+#This makes a crude mortality rate per 100,000 people for each state-year. This rate makes comparisons fair
+mort_state_year$CrudeRate_calc <- ifelse(  mort_state_year$Population > 0, (mort_state_year$Deaths / mort_state_year$Population) * 100000, NA)
+```
+
+## Combine the Datasets
+
+```{r}
+#combines the dataset so each year has mortality numbers plus education/poverty info
+merged <- mort_state_year %>% left_join(nhgis_small, by = "state_key")
+
+glimpse(merged)
+```
+
+```{r}
+merged3 <- merged %>%
+  filter(
+    !is.na(CrudeRate_calc),
+    !is.na(Population),
+    Population > 0)
+
+#dim(merged3)
+```
+
+```{r}
+#Create columns by numerial
+
+merged4 <- merged3 %>%
+  mutate(
+    edu_total = B86AA195 + B86AB195 + B86AC195,
+    ba_or_more = B86AB195 + B86AC195,
+    ba_share = ifelse(edu_total > 0, ba_or_more / edu_total, NA)
+  )
+```
+
+```{r}
+## Create column by category
+
+median_ba <- median(merged4$ba_share, na.rm = TRUE)
+
+merged5 <- merged4 %>%
+  mutate(ba_quintile = ntile(ba_share, 5))
+
+table(merged5$ba_group)
+
+trend_summary <- merged5 %>%
+  group_by(Year, ba_quintile) %>%
+  summarize(
+    mean_crude_rate = mean(CrudeRate_calc, na.rm = TRUE),
+    .groups = "drop")
+
+trend_summary
+```
+:::
+
+## Row 2 Column 1 {height="80%"}
+
+::: {.card title="Plot mortality trends by education quintile"}
+```{r}
+ggplot(trend_summary,
+       aes(x = Year,
+           y = mean_crude_rate,
+           color = factor(ba_quintile),
+           group = ba_quintile)) +
+  geom_line() +
+  labs(
+    title = "Mortality trends by education quintile",
+    x = "Year",
+    y = "Crude mortality rate (per 100,000)",
+    color = "BA share quintile"
+  )
+```
+:::
+
+## Row 2 Column 2 {height="20%"}
+
+::: {.card title="Conclusion"}
+Across BA quintiles, rates of death rise and fall in similar patters, but at different levels. Level of education has a clear correlation to likelihood to face death across the board.
+:::
+
+# Question 2
+
+## Row 1 Column 1 {height="20%"}
+
+::: {.card title="Question"}
+What do shifts in leading causes of death reveal about public attention and community priorities?
+:::
+
+## Row 1 Column 2 {height="80%"}
+
+::: {.card title="Animated Graph of Year vs. Leading Cause of Death"}
+```{r}
+
+library(gganimate)
+
+change_in_lead_gph <- merged2 |>
+  group_by(State) |>
+  ggplot(aes(x = ICD.Chapter, y = Deaths)) +
+  geom_col() + 
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(title = 'Year: {frame_time}', x = 'Cause of Death', y = 'Deaths') +
+  transition_time(Year) +
+  ease_aes('linear')
+
+
+animate(change_in_lead_gph, renderer = gifski_renderer())
+```
+:::
+
+## Row 2 Column 1 {height="20%"}
+
+::: {.card title="Conclusion"}
+Although the change in raw number of deaths changes, their relative statuses compared to one another do not really change throughout the years. This shows that, despite many years of medical advancement, we still are not addressing common illnesses to the extent that we would need to to create any meaningful change in death statistics. The use of the novel tool of an animated graph was useful, because it helps us see exactly how things shift and change throughout time, without having to compare multiple very similar graphs along a timeline. The animation makes those subtle differences very clear.
+:::
+
+# Question 3
+
+## Row 1 Column 1 {height="20%"}
+
+::: {.card title="Question"}
+How does the poverty rate in each state relate to mortality rates from external causes of death between 2000 and 2016?
+:::
+
+## Row 1 Column 2 {height="80%"}
+
+::: {.card title="Mortality vs Poverty"}
+```{r}
+merged2 <- merged2 %>%
+  mutate(
+    poverty_rate = CL6AA165 / Population * 100,
+    crude_rate_numeric = suppressWarnings(as.numeric(Crude.Rate))
+  )
+
+library(plotly)
+
+plot_data <- merged2 %>% filter(
+  ICD.Chapter == "External causes of morbidity and mortality",
+  !is.na(crude_rate_numeric)
+)
+
+ggplotly(
+  ggplot(plot_data, aes(x = poverty_rate, y = crude_rate_numeric, color = Year)) +
+    geom_point(alpha = 0.5) +
+    geom_smooth(method = "lm", color = "red", se = FALSE) +
+    labs(
+      title = "External Cause Mortality Rate vs. Poverty Rate",
+      x = "Poverty Rate (%)",
+      y = "Mortality Rate (per 100,000)"
+    )
+)
+
+```
+:::
+
+## Row 2 Column 1 {height="20%"}
+
+::: {.card title="Conclusion"}
+We can see in this graph that mortality rate seems to have little correlation with year, although perhaps it can be argued that there is more blue (i.e. more recent) dots closer to the top of the graph. Poverty rates seems to have an unclear effect on mortality rate, according to this dataset. More work would have to be done to reach a stonger conclusion.
+:::
+
+# Coding Notes
+
+## Row 1 Column 1 {height="20%"}
+
+::: {.card title="Coding Notes"}
+For question 2, I created an animated graph. I used the gganimate program, and had to look up their documentation to figure out how to add it on to a ggplot graph. A lot of help was also gained by the Ed board. I was having trouble figuring out how to make the gif actually show up, rather than a "null" statement, or a bunch of unconnected images. It was really confusing, but really rewarding, and ultimately very simple (I just had to add a few lines of code to the end of my graph, and they had really clear examples of different kinds of animated graphs on the documentation website).
+:::
+
+## Row 2 Column 1 {height="20%"}
+
+::: {.card title="Stakes"}
+This helped me make a graph that was both really clear, and held three different variables (cause of death, deaths per cause, and year). I think it makes the subtle shifts in rate of death really clear, while also showing that ultimately, the leading cause of death stays the same. Each year has similar enough statistics that I feel like a bunch of still graphs of the same data next to one another would be more boring, less dynamic, and easier to skim over.
+:::
+
+# Conclusion
+
+## Row 1 Column 1 {height="1000%"}
+
+::: {.card title="Conclusion"}
+Our main major takeaway is that education level ultimately has a strong correlation to chance of death. The graph isn't subtle; there's a lot of gap between each BA quartile. Ultimately, we also found that, while death rates change, the main causes of death remain on top. Our data was inconclusive about poverty level's correlation to death, but that was probably due to bad data.
+:::
